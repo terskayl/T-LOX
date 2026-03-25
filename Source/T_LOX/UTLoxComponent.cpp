@@ -103,19 +103,36 @@ void UUTLoxComponent::GetAnimatedPieceTransforms(TArray<FPieceCellTransform>& Ou
     {
         float T = FMath::Clamp(AnimState.timer / AnimState.rotationDuration, 0.f, 1.f);
 
-        // Pivot is in cell space — convert to world
+        // Pivot is in cell space ï¿½ convert to world
         FVector PivotWorld = CellToWorld(AnimState.pivotCell.x, AnimState.pivotCell.y, AnimState.pivotCell.z);
 
         // Figure out which axis we're rotating around from the move direction
-        FVector RotAxis;
+        FVector RotAxis = FVector::ZeroVector;
         float RotSign = 1.f;
+        FVector PivotOffset = FVector::ZeroVector;
+        float HalfGrid = GridSpacingCm * 0.5f;
+
         switch (AnimState.dir)
         {
-        case MoveDir::Left:     RotAxis = FVector(0, 1, 0); RotSign = -1.f; break;
-        case MoveDir::Right:    RotAxis = FVector(0, 1, 0); RotSign = 1.f; break;
-        case MoveDir::Forward:  RotAxis = FVector(1, 0, 0); RotSign = -1.f; break;
-        case MoveDir::Backward: RotAxis = FVector(1, 0, 0); RotSign = 1.f; break;
+        case MoveDir::Left:     
+            RotAxis = FVector(0, 1, 0); RotSign = -1.f; 
+            PivotOffset = FVector(-HalfGrid, 0, -HalfGrid);
+            break;
+        case MoveDir::Right:    
+            RotAxis = FVector(0, 1, 0); RotSign = 1.f; 
+            PivotOffset = FVector(HalfGrid, 0, -HalfGrid);
+            break;
+        case MoveDir::Forward:  
+            RotAxis = FVector(1, 0, 0); RotSign = -1.f; 
+            PivotOffset = FVector(0, HalfGrid, -HalfGrid);
+            break;
+        case MoveDir::Backward: 
+            RotAxis = FVector(1, 0, 0); RotSign = 1.f; 
+            PivotOffset = FVector(0, -HalfGrid, -HalfGrid);
+            break;
         }
+
+        PivotWorld += PivotOffset;
 
         float Angle = FMath::Lerp(0.f, 90.f * RotSign, T);
         FQuat RotQuat = FQuat(RotAxis, FMath::DegreesToRadians(Angle));
@@ -132,7 +149,7 @@ void UUTLoxComponent::GetAnimatedPieceTransforms(TArray<FPieceCellTransform>& Ou
     }
     else // AnimPhase::Gravity
     {
-        // Gravity is just translation — keep the final rotation from the rotate phase
+        // Gravity is just translation ï¿½ keep the final rotation from the rotate phase
         float T = FMath::Clamp(AnimState.timer / AnimState.gravityDuration, 0.f, 1.f);
         for (int i = 0; i < kCellCount; ++i)
         {
