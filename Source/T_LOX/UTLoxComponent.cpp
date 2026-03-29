@@ -146,9 +146,9 @@ void UUTLoxComponent::GetAnimatedPieceTransforms(TArray<FPieceCellTransform>& Ou
 
     if (AnimState.phase == AnimPhase::Rotating)
     {
-        float T = FMath::Clamp(AnimState.timer / AnimState.rotationDuration, 0.f, 1.f);
+        float T = 1 - FMath::Pow(1 - FMath::Clamp(AnimState.timer / AnimState.rotationDuration, 0.f, 1.f), 4);
 
-        // Pivot is in cell space � convert to world
+        // Pivot is in cell space, convert to world
         FVector PivotWorld = CellToWorld(AnimState.pivotCell.x, AnimState.pivotCell.y, AnimState.pivotCell.z);
 
         // Figure out which axis we're rotating around from the move direction
