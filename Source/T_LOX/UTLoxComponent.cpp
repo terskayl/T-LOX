@@ -100,9 +100,9 @@ TArray<FCellInfo> UUTLoxComponent::GetAllCells() const
 {
     TArray<FCellInfo> Result;
     const Level& L = State.level;
-    for (int z = 0; z < L.sizeZ; ++z)
-        for (int y = 0; y < L.sizeY; ++y)
-            for (int x = 0; x < L.sizeX; ++x)
+    for (int z = L.minZ; z < L.minZ + L.sizeZ; ++z)
+        for (int y = L.minY; y < L.minY + L.sizeY; ++y)
+            for (int x = L.minX; x < L.minX + L.sizeX; ++x)
             {
                 CellType Type = GetCell(L, { x, y, z });
                 if (Type == CellType::Empty) continue;
