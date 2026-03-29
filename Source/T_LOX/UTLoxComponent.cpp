@@ -38,8 +38,10 @@ void UUTLoxComponent::ResetLevel()
     AnimState = {};
 }
 
+// Added comment to force Unreal to relink the new gameplay.lib!
 bool UUTLoxComponent::IsAnimating() const { return AnimState.active; }
 bool UUTLoxComponent::IsGoalMet()   const { return IsGoalSatisfied(State); }
+int32 UUTLoxComponent::GetMoveCount() const { return State.moveCount; }
 
 void UUTLoxComponent::TickComponent(float DeltaTime, ELevelTick TickType,
     FActorComponentTickFunction* ThisTickFunction)

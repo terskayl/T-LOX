@@ -80,6 +80,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "T-Lox")
 	bool IsGoalMet() const;
 
+	UFUNCTION(BlueprintCallable, Category = "T-Lox")
+	int32 GetMoveCount() const;
+
 	const PieceAnimationState& GetAnimState() const;
 	const GameplayState& GetGameState() const;
 
