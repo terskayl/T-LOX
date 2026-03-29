@@ -59,37 +59,35 @@ void UUTLoxComponent::TickComponent(float DeltaTime, ELevelTick TickType,
         {
             GameplayState TempState = State; 
             MoveResult Result = TryMove(TempState, Dir);
-            if (Result.reason != MoveFailReason::CouldNotDeriveRotatedPose)
+
+            FVector PivotWorld = CellToWorld(Result.pivot.x, Result.pivot.y, Result.pivot.z);
+            FVector PivotOffset = FVector::ZeroVector;
+
+            switch (Dir)
             {
-                FVector PivotWorld = CellToWorld(Result.pivot.x, Result.pivot.y, Result.pivot.z);
-                FVector PivotOffset = FVector::ZeroVector;
+            case MoveDir::Left:     PivotOffset = FVector(-HalfGrid, 0, -HalfGrid); break;
+            case MoveDir::Right:    PivotOffset = FVector(HalfGrid, 0, -HalfGrid); break;
+            case MoveDir::Forward:  PivotOffset = FVector(0, HalfGrid, -HalfGrid); break;
+            case MoveDir::Backward: PivotOffset = FVector(0, -HalfGrid, -HalfGrid); break;
+            }
+            PivotWorld += PivotOffset;
 
-                switch (Dir)
+            if (Result.moved)
+            {
+                DrawDebugSphere(GetWorld(), PivotWorld, 10.0f, 12, FColor::Blue, false, -1.0f, 1, 3.0f);
+            }
+            else
+            {
+                float Size = 10.0f;
+                if (Dir == MoveDir::Left || Dir == MoveDir::Right)
                 {
-                case MoveDir::Left:     PivotOffset = FVector(-HalfGrid, 0, -HalfGrid); break;
-                case MoveDir::Right:    PivotOffset = FVector(HalfGrid, 0, -HalfGrid); break;
-                case MoveDir::Forward:  PivotOffset = FVector(0, HalfGrid, -HalfGrid); break;
-                case MoveDir::Backward: PivotOffset = FVector(0, -HalfGrid, -HalfGrid); break;
-                }
-                PivotWorld += PivotOffset;
-
-                if (Result.moved)
-                {
-                    DrawDebugSphere(GetWorld(), PivotWorld, 10.0f, 12, FColor::Blue, false, -1.0f, 1, 3.0f);
+                    DrawDebugLine(GetWorld(), PivotWorld + FVector(-Size, 0, Size), PivotWorld + FVector(Size, 0, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
+                    DrawDebugLine(GetWorld(), PivotWorld + FVector(Size, 0, Size), PivotWorld + FVector(-Size, 0, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
                 }
                 else
                 {
-                    float Size = 10.0f;
-                    if (Dir == MoveDir::Left || Dir == MoveDir::Right)
-                    {
-                        DrawDebugLine(GetWorld(), PivotWorld + FVector(-Size, 0, Size), PivotWorld + FVector(Size, 0, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
-                        DrawDebugLine(GetWorld(), PivotWorld + FVector(Size, 0, Size), PivotWorld + FVector(-Size, 0, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
-                    }
-                    else
-                    {
-                        DrawDebugLine(GetWorld(), PivotWorld + FVector(0, -Size, Size), PivotWorld + FVector(0, Size, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
-                        DrawDebugLine(GetWorld(), PivotWorld + FVector(0, Size, Size), PivotWorld + FVector(0, -Size, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
-                    }
+                    DrawDebugLine(GetWorld(), PivotWorld + FVector(0, -Size, Size), PivotWorld + FVector(0, Size, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
+                    DrawDebugLine(GetWorld(), PivotWorld + FVector(0, Size, Size), PivotWorld + FVector(0, -Size, -Size), FColor::Red, false, -1.0f, 1, 3.0f);
                 }
             }
         }
