@@ -12,6 +12,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGoalSatisfied);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoveCompleted, bool, bMoved);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveFailed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUndoPerformed);
 
 USTRUCT(BlueprintType)
 struct FCellInfo
@@ -52,6 +53,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "T-Lox")
 	FOnMoveFailed OnMoveFailed;
 
+	UPROPERTY(BlueprintAssignable, Category = "T-Lox")
+	FOnUndoPerformed OnUndoPerformed;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "T-Lox")
 	float GridSpacingCm = 100.f;
 
@@ -73,6 +77,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "T-Lox")
 	void ResetLevel();
+
+	UFUNCTION(BlueprintCallable, Category = "T-Lox")
+	void UndoMove();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "T-Lox")
+	bool CanUndo() const;
 
 	UFUNCTION(BlueprintCallable, Category = "T-Lox")
 	bool IsAnimating() const;
@@ -112,6 +122,7 @@ private:
 	GameplayState       State;
 	GameplayState       InitialState;
 	PieceAnimationState AnimState;
+	std::vector<GameplayState> StateHistory;
 
 	void RequestMove(MoveDir Dir);
 		

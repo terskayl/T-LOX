@@ -17,6 +17,7 @@ void UUTLoxComponent::LoadAndInitLevel(const FString& LevelPath)
     State = CreateGameplayState(L);
     InitialState = State;
     AnimState = {};
+    StateHistory.clear();
 }
 
 void UUTLoxComponent::RequestMove(MoveDir IntendedDir)
@@ -54,7 +55,12 @@ void UUTLoxComponent::RequestMove(MoveDir IntendedDir)
         }
     }
 
+    GameplayState PrevState = State;
     MoveResult Result = TryMove(State, WorldDir);
+    if (Result.moved)
+    {
+        StateHistory.push_back(PrevState);
+    }
     BeginMoveAnimation(AnimState, Result, WorldDir);
     OnMoveCompleted.Broadcast(Result.moved);
     if (!Result.moved)
@@ -72,11 +78,28 @@ void UUTLoxComponent::ResetLevel()
 {
     State = InitialState;
     AnimState = {};
+    StateHistory.clear();
 }
 
 bool UUTLoxComponent::IsAnimating() const { return AnimState.active; }
 bool UUTLoxComponent::IsGoalMet()   const { return IsGoalSatisfied(State); }
 int32 UUTLoxComponent::GetMoveCount() const { return State.moveCount; }
+
+void UUTLoxComponent::UndoMove()
+{
+    if (CanUndo())
+    {
+        State = StateHistory.back();
+        StateHistory.pop_back();
+        AnimState = {};
+        OnUndoPerformed.Broadcast();
+    }
+}
+
+bool UUTLoxComponent::CanUndo() const
+{
+    return !AnimState.active && !StateHistory.empty();
+}
 
 void UUTLoxComponent::TickComponent(float DeltaTime, ELevelTick TickType,
     FActorComponentTickFunction* ThisTickFunction)
@@ -96,6 +119,11 @@ void UUTLoxComponent::TickComponent(float DeltaTime, ELevelTick TickType,
         if (PC->IsInputKeyDown(EKeys::E))
         {
             YawDelta -= RotateSpeed * DeltaTime;
+        }
+
+        if (PC->WasInputKeyJustPressed(EKeys::U))
+        {
+            UndoMove();
         }
 
         if (FMath::Abs(YawDelta) > 0.001f)
