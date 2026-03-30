@@ -19,11 +19,43 @@ void UUTLoxComponent::LoadAndInitLevel(const FString& LevelPath)
     AnimState = {};
 }
 
-void UUTLoxComponent::RequestMove(MoveDir Dir)
+void UUTLoxComponent::RequestMove(MoveDir IntendedDir)
 {
     if (AnimState.active) return;
-    MoveResult Result = TryMove(State, Dir);
-    BeginMoveAnimation(AnimState, Result, Dir);
+
+    MoveDir WorldDir = IntendedDir;
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (APlayerCameraManager* CamManager = PC->PlayerCameraManager)
+        {
+            FVector CamFwd = CamManager->GetCameraRotation().Vector();
+            CamFwd.Z = 0.0f; CamFwd.Normalize();
+            FVector CamRt = FRotationMatrix(CamManager->GetCameraRotation()).GetScaledAxis(EAxis::Y);
+            CamRt.Z = 0.0f; CamRt.Normalize();
+
+            // SKEW the input by 45 degrees to perfectly align WASD to the isometric grid gaps
+            // This prevents diagonal camera views from causing ambiguous edge-flipping.
+            CamFwd = CamFwd.RotateAngleAxis(25.f, FVector::UpVector);
+            CamRt = CamRt.RotateAngleAxis(25.f, FVector::UpVector);
+
+            FVector InputVector = FVector::ZeroVector;
+            if (IntendedDir == MoveDir::Forward) InputVector = -CamFwd;
+            if (IntendedDir == MoveDir::Backward) InputVector = CamFwd;
+            if (IntendedDir == MoveDir::Right) InputVector = CamRt;
+            if (IntendedDir == MoveDir::Left) InputVector = -CamRt;
+
+            if (!InputVector.IsNearlyZero())
+            {
+                float MaxDot = InputVector.X; WorldDir = MoveDir::Right;
+                if (-InputVector.X > MaxDot) { MaxDot = -InputVector.X; WorldDir = MoveDir::Left; }
+                if (InputVector.Y > MaxDot) { MaxDot = InputVector.Y; WorldDir = MoveDir::Forward; }
+                if (-InputVector.Y > MaxDot) { MaxDot = -InputVector.Y; WorldDir = MoveDir::Backward; }
+            }
+        }
+    }
+
+    MoveResult Result = TryMove(State, WorldDir);
+    BeginMoveAnimation(AnimState, Result, WorldDir);
     OnMoveCompleted.Broadcast(Result.moved);
     if (!Result.moved)
         OnMoveFailed.Broadcast();
