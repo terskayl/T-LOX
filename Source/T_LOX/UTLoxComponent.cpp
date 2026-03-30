@@ -1,5 +1,8 @@
 #include "UTLoxComponent.h"
 #include "DrawDebugHelpers.h"
+#include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
 
 UUTLoxComponent::UUTLoxComponent()
 {
@@ -48,6 +51,30 @@ void UUTLoxComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     UpdateAnimation(AnimState, DeltaTime);
+
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        float RotateSpeed = 90.0f; // degrees per second
+        float YawDelta = 0.0f;
+
+        if (PC->IsInputKeyDown(EKeys::Q))
+        {
+            YawDelta += RotateSpeed * DeltaTime;
+        }
+        if (PC->IsInputKeyDown(EKeys::E))
+        {
+            YawDelta -= RotateSpeed * DeltaTime;
+        }
+
+        if (FMath::Abs(YawDelta) > 0.001f)
+        {
+            AActor* Target = PC->GetPawn() ? PC->GetPawn() : PC->GetViewTarget();
+            if (Target)
+            {
+                RotateCameraAroundCenter(Target, YawDelta);
+            }
+        }
+    }
 
     if (!AnimState.active && State.level.sizeX > 0)
     {
@@ -117,6 +144,34 @@ TArray<FCellInfo> UUTLoxComponent::GetAllCells() const
 FVector UUTLoxComponent::CellToWorld(int32 X, int32 Y, int32 Z) const
 {
     return FVector(X * GridSpacingCm, Y * GridSpacingCm, Z * GridSpacingCm);
+}
+
+FVector UUTLoxComponent::GetLevelCenterWorld() const
+{
+    if (State.level.sizeX == 0) return FVector::ZeroVector;
+
+    float CenterX = State.level.minX + (State.level.sizeX - 1) * 0.5f;
+    float CenterY = State.level.minY + (State.level.sizeY - 1) * 0.5f;
+    float CenterZ = State.level.minZ + (State.level.sizeZ - 1) * 0.5f;
+
+    return CellToWorld(CenterX, CenterY, CenterZ);
+}
+
+void UUTLoxComponent::RotateCameraAroundCenter(AActor* CameraActor, float AngleDegrees) const
+{
+    if (!CameraActor || State.level.sizeX == 0) return;
+
+    FVector LevelCenter = GetLevelCenterWorld();
+    FVector CamPos = CameraActor->GetActorLocation();
+    
+    // Orbit the position around the Z axis
+    FVector Offset = CamPos - LevelCenter;
+    FVector RotatedOffset = Offset.RotateAngleAxis(AngleDegrees, FVector::UpVector);
+    
+    CameraActor->SetActorLocation(LevelCenter + RotatedOffset);
+    
+    // Add the yaw rotation so the camera orientation matches the orbit
+    CameraActor->AddActorWorldRotation(FRotator(0.0f, AngleDegrees, 0.0f));
 }
 
 void UUTLoxComponent::GetPieceCellPositions(TArray<FVector>& OutPositions) const

@@ -98,6 +98,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "T-Lox")
 	void GetAnimatedPieceTransforms(TArray<FPieceCellTransform>& OutTransforms) const;
 
+	UFUNCTION(BlueprintCallable, Category = "T-Lox")
+	FVector GetLevelCenterWorld() const;
+
+	UFUNCTION(BlueprintCallable, Category = "T-Lox")
+	void RotateCameraAroundCenter(AActor* CameraActor, float AngleDegrees) const;
+
 protected:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
