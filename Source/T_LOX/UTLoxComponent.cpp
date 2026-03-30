@@ -36,8 +36,8 @@ void UUTLoxComponent::RequestMove(MoveDir IntendedDir)
 
             // SKEW the input by 45 degrees to perfectly align WASD to the isometric grid gaps
             // This prevents diagonal camera views from causing ambiguous edge-flipping.
-            CamFwd = CamFwd.RotateAngleAxis(25.f, FVector::UpVector);
-            CamRt = CamRt.RotateAngleAxis(25.f, FVector::UpVector);
+            // CamFwd = CamFwd.RotateAngleAxis(25.f, FVector::UpVector);
+            // CamRt = CamRt.RotateAngleAxis(25.f, FVector::UpVector);
 
             FVector InputVector = FVector::ZeroVector;
             if (IntendedDir == MoveDir::Forward) InputVector = -CamFwd;
